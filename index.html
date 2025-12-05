@@ -3,15 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>일본어 어휘 마스터 (심화)</title>
+    <title>일본어 기말범위 올스타(이것만 하면 나도 만점?)</title>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --primary: #6366f1;
-            --primary-hover: #4f46e5;
-            --success: #10b981;
-            --error: #ef4444;
-            --background: linear-gradient(135deg, #a5f3fc 0%, #818cf8 100%);
+            --primary: #4f46e5;
+            --primary-hover: #4338ca;
+            --success: #059669;
+            --error: #dc2626;
+            --background: linear-gradient(135deg, #eef2ff 0%, #c7d2fe 100%);
             --card-bg: rgba(255, 255, 255, 0.95);
         }
 
@@ -33,25 +33,26 @@
             border-radius: 24px;
             box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
             width: 100%;
-            max-width: 480px;
+            max-width: 500px;
             text-align: center;
             backdrop-filter: blur(10px);
             transition: transform 0.3s ease;
         }
 
-        header {
-            margin-bottom: 2rem;
-        }
+        header { margin-bottom: 2rem; }
 
-        h1 {
-            font-size: 1.5rem;
-            margin: 0 0 0.5rem 0;
-            color: #374151;
+        .status {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.9rem;
+            color: #6b7280;
+            margin-top: 8px;
+            font-weight: 600;
         }
 
         .progress-wrapper {
             background: #e5e7eb;
-            height: 8px;
+            height: 10px;
             border-radius: 999px;
             overflow: hidden;
             margin-top: 10px;
@@ -64,15 +65,6 @@
             transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
-        .status {
-            display: flex;
-            justify-content: space-between;
-            font-size: 0.875rem;
-            color: #6b7280;
-            margin-top: 8px;
-            font-weight: 500;
-        }
-
         .question-card {
             background: #f3f4f6;
             border-radius: 16px;
@@ -80,11 +72,24 @@
             margin-bottom: 2rem;
             border: 2px solid transparent;
             transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .category-badge {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: #e0e7ff;
+            color: #4338ca;
+            font-size: 0.75rem;
+            padding: 4px 10px;
+            border-radius: 99px;
+            font-weight: 700;
         }
 
         .jp-word {
             font-family: 'Noto Sans JP', sans-serif;
-            font-size: 2.8rem;
+            font-size: 2.5rem;
             font-weight: 700;
             color: #111827;
             line-height: 1.2;
@@ -112,7 +117,7 @@
 
         input[type="text"]:focus {
             border-color: var(--primary);
-            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+            box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.2);
         }
 
         input.correct {
@@ -156,16 +161,12 @@
             font-weight: 700;
             cursor: pointer;
             transition: all 0.2s;
-            box-shadow: 0 4px 6px -1px rgba(99, 102, 241, 0.3);
+            box-shadow: 0 4px 6px -1px rgba(79, 70, 229, 0.3);
         }
 
         .btn:hover {
             background: var(--primary-hover);
             transform: translateY(-2px);
-        }
-
-        .btn:active {
-            transform: translateY(0);
         }
 
         #result-screen { display: none; }
@@ -206,8 +207,8 @@
     <div class="container" id="quiz-screen">
         <header>
             <div class="status">
-                <span>STAGE <span id="current-num">1</span></span>
-                <span id="remain-num">47 남음</span>
+                <span>진행 상황</span>
+                <span><span id="current-num">1</span> / <span id="total-cnt-header">0</span></span>
             </div>
             <div class="progress-wrapper">
                 <div class="progress-bar" id="progress-bar"></div>
@@ -215,6 +216,7 @@
         </header>
 
         <div class="question-card">
+            <span class="category-badge" id="category-badge">단어</span>
             <div class="jp-word" id="question-text"></div>
         </div>
 
@@ -229,13 +231,13 @@
 
     <div class="container" id="result-screen">
         <h1>테스트 완료!</h1>
-        <p>당신의 최종 점수는?</p>
+        <p>최종 점수</p>
         
         <div class="score-display"><span id="final-score">0</span>점</div>
         <p><span id="correct-cnt">0</span> / <span id="total-cnt">0</span> 문제 정답</p>
 
         <div class="wrong-answers-container" id="wrong-box" style="display: none;">
-            <h4 style="margin:0 0 10px 0; color:#374151;">틀린 문제 복습</h4>
+            <h4 style="margin:0 0 10px 0; color:#374151;">오답 노트</h4>
             <div id="wrong-list"></div>
         </div>
 
@@ -243,81 +245,148 @@
     </div>
 
     <script>
-        // 수정된 데이터: いい(よい), しおからい(しょっぱい) 분리
-        // 한자 표기(易しい, 熱い 등)는 동음이의어 구분을 위해 유지
+        // === 데이터 통합 (기존 + PDF 내용) ===
         const vocabData = [
-            { jp: "あたらしい", kr: "새롭다", valid: ["새롭다"] },
-            { jp: "ふるい", kr: "오래되다", valid: ["오래되다", "오래됐다", "낡다"] },
-            
-            // 분리됨: いい / よい
-            { jp: "いい", kr: "좋다", valid: ["좋다"] },
-            { jp: "よい", kr: "좋다", valid: ["좋다"] },
-            
-            { jp: "わるい", kr: "나쁘다", valid: ["나쁘다"] },
-            { jp: "うれしい", kr: "기쁘다", valid: ["기쁘다"] },
-            { jp: "かなしい", kr: "슬프다", valid: ["슬프다"] },
-            { jp: "おおきい", kr: "크다", valid: ["크다"] },
-            { jp: "ちいさい", kr: "작다", valid: ["작다"] },
-            { jp: "おいしい", kr: "맛있다", valid: ["맛있다"] },
-            { jp: "まずい", kr: "맛없다", valid: ["맛없다"] },
-            { jp: "おもしろい", kr: "재미있다", valid: ["재미있다", "재미 있다"] },
-            { jp: "つまらない", kr: "재미없다", valid: ["재미없다", "재미 없다", "지루하다"] },
-            { jp: "せまい", kr: "좁다", valid: ["좁다"] },
-            { jp: "ひろい", kr: "넓다", valid: ["넓다"] },
-            { jp: "ちかい", kr: "가깝다", valid: ["가깝다"] },
-            { jp: "とおい", kr: "멀다", valid: ["멀다"] },
-            { jp: "みじかい", kr: "짧다", valid: ["짧다"] },
-            { jp: "ながい", kr: "길다", valid: ["길다"] },
-            { jp: "すくない", kr: "적다", valid: ["적다"] },
-            { jp: "おおい", kr: "많다", valid: ["많다"] },
-            
-            // 한자 구분 유지
-            { jp: "やさしい (易しい)", kr: "쉽다", valid: ["쉽다"] },
-            { jp: "むずかしい", kr: "어렵다", valid: ["어렵다"] },
-            
-            { jp: "あかい", kr: "빨갛다", valid: ["빨갛다"] },
-            { jp: "あおい", kr: "파랗다", valid: ["파랗다"] },
-            { jp: "しろい", kr: "하얗다", valid: ["하얗다"] },
-            { jp: "くろい", kr: "검다", valid: ["검다"] },
-            { jp: "きいろい", kr: "노랗다", valid: ["노랗다"] },
-            { jp: "からい", kr: "맵다", valid: ["맵다"] },
-            
-            // 분리됨: しおからい / しょっぱい
-            { jp: "しおからい", kr: "짜다", valid: ["짜다"] },
-            { jp: "しょっぱい", kr: "짜다", valid: ["짜다"] },
+            // --- [기존] 형용사 ---
+            { jp: "あたらしい", kr: "새롭다", valid: ["새롭다"], type: "형용사" },
+            { jp: "ふるい", kr: "오래되다", valid: ["오래되다", "오래됐다", "낡다"], type: "형용사" },
+            { jp: "いい", kr: "좋다", valid: ["좋다"], type: "형용사" },
+            { jp: "よい", kr: "좋다", valid: ["좋다"], type: "형용사" },
+            { jp: "わるい", kr: "나쁘다", valid: ["나쁘다"], type: "형용사" },
+            { jp: "うれしい", kr: "기쁘다", valid: ["기쁘다"], type: "형용사" },
+            { jp: "かなしい", kr: "슬프다", valid: ["슬프다"], type: "형용사" },
+            { jp: "おおきい", kr: "크다", valid: ["크다"], type: "형용사" },
+            { jp: "ちいさい", kr: "작다", valid: ["작다"], type: "형용사" },
+            { jp: "おいしい", kr: "맛있다", valid: ["맛있다"], type: "형용사" },
+            { jp: "まずい", kr: "맛없다", valid: ["맛없다"], type: "형용사" },
+            { jp: "おもしろい", kr: "재미있다", valid: ["재미있다", "재미 있다"], type: "형용사" },
+            { jp: "つまらない", kr: "재미없다", valid: ["재미없다", "재미 없다", "지루하다"], type: "형용사" },
+            { jp: "せまい", kr: "좁다", valid: ["좁다"], type: "형용사" },
+            { jp: "ひろい", kr: "넓다", valid: ["넓다"], type: "형용사" },
+            { jp: "ちかい", kr: "가깝다", valid: ["가깝다"], type: "형용사" },
+            { jp: "とおい", kr: "멀다", valid: ["멀다"], type: "형용사" },
+            { jp: "みじかい", kr: "짧다", valid: ["짧다"], type: "형용사" },
+            { jp: "ながい", kr: "길다", valid: ["길다"], type: "형용사" },
+            { jp: "すくない", kr: "적다", valid: ["적다"], type: "형용사" },
+            { jp: "おおい", kr: "많다", valid: ["많다"], type: "형용사" },
+            { jp: "やさしい (易しい)", kr: "쉽다", valid: ["쉽다"], type: "형용사" },
+            { jp: "むずかしい", kr: "어렵다", valid: ["어렵다"], type: "형용사" },
+            { jp: "あかい", kr: "빨갛다", valid: ["빨갛다"], type: "형용사" },
+            { jp: "あおい", kr: "파랗다", valid: ["파랗다"], type: "형용사" },
+            { jp: "しろい", kr: "하얗다", valid: ["하얗다"], type: "형용사" },
+            { jp: "くろい", kr: "검다", valid: ["검다"], type: "형용사" },
+            { jp: "きいろい", kr: "노랗다", valid: ["노랗다"], type: "형용사" },
+            { jp: "からい", kr: "맵다", valid: ["맵다"], type: "형용사" },
+            { jp: "しおからい", kr: "짜다", valid: ["짜다"], type: "형용사" },
+            { jp: "しょっぱい", kr: "짜다", valid: ["짜다"], type: "형용사" },
+            { jp: "あまい", kr: "달다", valid: ["달다"], type: "형용사" },
+            { jp: "すっぱい", kr: "시다", valid: ["시다"], type: "형용사" },
+            { jp: "にがい", kr: "쓰다", valid: ["쓰다"], type: "형용사" },
+            { jp: "あつい (熱い)", kr: "뜨겁다", valid: ["뜨겁다"], type: "형용사" },
+            { jp: "かわいい", kr: "귀엽다", valid: ["귀엽다"], type: "형용사" },
+            { jp: "いそがしい", kr: "바쁘다", valid: ["바쁘다"], type: "형용사" },
+            { jp: "すばらしい", kr: "훌륭하다", valid: ["훌륭하다"], type: "형용사" },
+            { jp: "あぶない", kr: "위험하다", valid: ["위험하다"], type: "형용사" },
+            { jp: "やさしい (優しい)", kr: "상냥하다", valid: ["상냥하다"], type: "형용사" },
+            { jp: "やすい (安い)", kr: "(가격이) 싸다", valid: ["싸다", "가격이 싸다"], type: "형용사" },
+            { jp: "さむい", kr: "춥다", valid: ["춥다"], type: "형용사" },
+            { jp: "きれいだ", kr: "아름답다", valid: ["아름답다", "예쁘다"], type: "형용사" },
+            { jp: "すてきだ", kr: "멋지다", valid: ["멋지다", "근사하다"], type: "형용사" },
+            { jp: "すきだ", kr: "좋아하다", valid: ["좋아하다"], type: "형용사" },
+            { jp: "きらいだ", kr: "싫어하다", valid: ["싫어하다"], type: "형용사" },
+            { jp: "じょうず (上手)だ", kr: "잘하다", valid: ["잘하다", "능숙하다"], type: "형용사" },
+            { jp: "へた (下手)だ", kr: "잘 못하다", valid: ["잘 못하다", "서투르다"], type: "형용사" },
+            { jp: "しずかだ", kr: "조용하다", valid: ["조용하다"], type: "형용사" },
+            { jp: "だめだ", kr: "안 되다", valid: ["안 되다", "안되다"], type: "형용사" },
+            { jp: "まじめだ", kr: "성실하다", valid: ["성실하다"], type: "형용사" },
+            { jp: "にぎやかだ", kr: "번화하다", valid: ["번화하다"], type: "형용사" },
 
-            { jp: "あまい", kr: "달다", valid: ["달다"] },
-            { jp: "すっぱい", kr: "시다", valid: ["시다"] },
-            { jp: "にがい", kr: "쓰다", valid: ["쓰다"] },
-            
-            // 한자 구분 유지
-            { jp: "あつい (熱い)", kr: "뜨겁다", valid: ["뜨겁다"] },
-            
-            { jp: "かわいい", kr: "귀엽다", valid: ["귀엽다"] },
-            { jp: "いそがしい", kr: "바쁘다", valid: ["바쁘다"] },
-            { jp: "すばらしい", kr: "훌륭하다", valid: ["훌륭하다"] },
-            { jp: "あぶない", kr: "위험하다", valid: ["위험하다"] },
-            
-            // 한자 구분 유지
-            { jp: "やさしい (優しい)", kr: "상냥하다", valid: ["상냥하다"] },
-            { jp: "やすい (安い)", kr: "(가격이) 싸다", valid: ["싸다", "가격이 싸다", "가격이싸다"] },
-            
-            { jp: "さむい", kr: "춥다", valid: ["춥다"] },
-            
-            // na형용사
-            { jp: "きれいだ", kr: "아름답다", valid: ["아름답다", "예쁘다", "깨끗하다"] },
-            { jp: "すてきだ", kr: "멋지다, 근사하다", valid: ["멋지다", "근사하다"] },
-            { jp: "すきだ", kr: "좋아하다", valid: ["좋아하다"] },
-            { jp: "きらいだ", kr: "싫어하다", valid: ["싫어하다"] },
-            
-            // 한자 구분 유지
-            { jp: "じょうず (上手)だ", kr: "잘하다, 능숙하다", valid: ["잘하다", "능숙하다"] },
-            { jp: "へた (下手)だ", kr: "잘 못하다, 서투르다", valid: ["잘 못하다", "잘못하다", "서투르다"] },
-            
-            { jp: "しずかだ", kr: "조용하다, 고요하다", valid: ["조용하다", "고요하다"] },
-            { jp: "だめだ", kr: "안 되다", valid: ["안 되다", "안되다"] },
-            { jp: "まじめだ", kr: "성실하다", valid: ["성실하다"] },
-            { jp: "にぎやかだ", kr: "번화하다", valid: ["번화하다"] }
+            // --- [신규] PDF Page 1 (기초 명사) ---
+            { jp: "いえ", kr: "집", valid: ["집"], type: "장소" },
+            { jp: "えき", kr: "역", valid: ["역"], type: "장소" },
+            { jp: "かお", kr: "얼굴", valid: ["얼굴"], type: "신체" },
+            { jp: "ほん", kr: "책", valid: ["책"], type: "사물" },
+            { jp: "かぞく", kr: "가족", valid: ["가족"], type: "사람" },
+            { jp: "ぶかつ", kr: "동아리 활동", valid: ["동아리", "동아리 활동", "부활동"], type: "생활" },
+            { jp: "ここ", kr: "여기", valid: ["여기"], type: "장소" },
+            { jp: "ごご", kr: "오후", valid: ["오후"], type: "시간" },
+            { jp: "あし", kr: "발 (다리)", valid: ["발", "다리"], type: "신체" },
+            { jp: "あじ", kr: "맛", valid: ["맛"], type: "생활" },
+            { jp: "いす", kr: "의자", valid: ["의자"], type: "사물" },
+            { jp: "すし", kr: "초밥", valid: ["초밥", "스시"], type: "음식" },
+            { jp: "ちかてつ", kr: "지하철", valid: ["지하철"], type: "교통" },
+            { jp: "つくえ", kr: "책상", valid: ["책상"], type: "사물" },
+            { jp: "いしゃ", kr: "의사", valid: ["의사"], type: "직업" },
+            { jp: "じゆう", kr: "자유", valid: ["자유"], type: "개념" },
+            { jp: "りよう", kr: "이용", valid: ["이용"], type: "생활" },
+            { jp: "りょうり", kr: "요리", valid: ["요리"], type: "생활" },
+            { jp: "いぬ", kr: "개", valid: ["개", "강아지"], type: "동물" },
+            { jp: "ねこ", kr: "고양이", valid: ["고양이"], type: "동물" },
+
+            // --- [신규] PDF Page 2 (숫자 완전 정복) ---
+            // 1~10
+            { jp: "いち", kr: "1", valid: ["1", "일", "하나"], type: "숫자" },
+            { jp: "に", kr: "2", valid: ["2", "이", "둘"], type: "숫자" },
+            { jp: "さん", kr: "3", valid: ["3", "삼", "셋"], type: "숫자" },
+            { jp: "よん", kr: "4", valid: ["4", "사", "넷"], type: "숫자" },
+            { jp: "ご", kr: "5", valid: ["5", "오", "다섯"], type: "숫자" },
+            { jp: "ろく", kr: "6", valid: ["6", "육", "여섯"], type: "숫자" },
+            { jp: "なな", kr: "7", valid: ["7", "칠", "일곱"], type: "숫자" },
+            { jp: "しち", kr: "7", valid: ["7", "칠", "일곱"], type: "숫자" },
+            { jp: "はち", kr: "8", valid: ["8", "팔", "여덟"], type: "숫자" },
+            { jp: "きゅう", kr: "9", valid: ["9", "구", "아홉"], type: "숫자" },
+            { jp: "く", kr: "9", valid: ["9", "구", "아홉"], type: "숫자" },
+            { jp: "じゅう", kr: "10", valid: ["10", "십", "열"], type: "숫자" },
+
+            // 10단위
+            { jp: "にじゅう", kr: "20", valid: ["20", "이십"], type: "숫자" },
+            { jp: "さんじゅう", kr: "30", valid: ["30", "삼십"], type: "숫자" },
+            { jp: "よんじゅう", kr: "40", valid: ["40", "사십"], type: "숫자" },
+            { jp: "ごじゅう", kr: "50", valid: ["50", "오십"], type: "숫자" },
+            { jp: "ろくじゅう", kr: "60", valid: ["60", "육십"], type: "숫자" },
+            { jp: "ななじゅう", kr: "70", valid: ["70", "칠십"], type: "숫자" },
+            { jp: "はちじゅう", kr: "80", valid: ["80", "팔십"], type: "숫자" },
+            { jp: "きゅうじゅう", kr: "90", valid: ["90", "구십"], type: "숫자" },
+
+            // 100단위 (발음 주의 포함)
+            { jp: "ひゃく", kr: "100", valid: ["100", "백"], type: "숫자" },
+            { jp: "にひゃく", kr: "200", valid: ["200", "이백"], type: "숫자" },
+            { jp: "さんびゃく", kr: "300", valid: ["300", "삼백"], type: "숫자" },
+            { jp: "よんひゃく", kr: "400", valid: ["400", "사백"], type: "숫자" },
+            { jp: "ごひゃく", kr: "500", valid: ["500", "오백"], type: "숫자" },
+            { jp: "ろっぴゃく", kr: "600", valid: ["600", "육백"], type: "숫자" },
+            { jp: "ななひゃく", kr: "700", valid: ["700", "칠백"], type: "숫자" },
+            { jp: "はっぴゃく", kr: "800", valid: ["800", "팔백"], type: "숫자" },
+            { jp: "きゅうひゃく", kr: "900", valid: ["900", "구백"], type: "숫자" },
+
+            // 천/만/억
+            { jp: "せん", kr: "1,000", valid: ["1000", "천", "일천"], type: "숫자" },
+            { jp: "さんぜん", kr: "3,000", valid: ["3000", "삼천"], type: "숫자" },
+            { jp: "はっせん", kr: "8,000", valid: ["8000", "팔천"], type: "숫자" },
+            { jp: "いちまん", kr: "10,000", valid: ["10000", "만", "일만"], type: "숫자" },
+            { jp: "じゅうまん", kr: "100,000", valid: ["100000", "십만"], type: "숫자" },
+            { jp: "ひゃくまん", kr: "1,000,000", valid: ["1000000", "백만"], type: "숫자" },
+            { jp: "いちおく", kr: "1억", valid: ["100000000", "1억", "일억"], type: "숫자" },
+
+            // --- [기존] 기타 어휘 ---
+            { jp: "えいが", kr: "영화", valid: ["영화"], type: "명사" },
+            { jp: "すいえい", kr: "수영", valid: ["수영"], type: "명사" },
+            { jp: "ぎんこう", kr: "은행", valid: ["은행"], type: "명사" },
+            { jp: "ぶんか", kr: "문화", valid: ["문화"], type: "명사" },
+            { jp: "しゅみ", kr: "취미", valid: ["취미"], type: "명사" },
+            { jp: "きょねん", kr: "작년", valid: ["작년", "지난해"], type: "시간" },
+            { jp: "ことし", kr: "올해", valid: ["올해", "금년"], type: "시간" },
+            { jp: "らいねん", kr: "내년", valid: ["내년"], type: "시간" },
+            { jp: "きのう", kr: "어제", valid: ["어제"], type: "시간" },
+            { jp: "きょう", kr: "오늘", valid: ["오늘"], type: "시간" },
+            { jp: "あした", kr: "내일", valid: ["내일"], type: "시간" },
+            { jp: "くだもの", kr: "과일", valid: ["과일"], type: "음식" },
+            { jp: "もも", kr: "복숭아", valid: ["복숭아"], type: "음식" },
+            { jp: "りんご", kr: "사과", valid: ["사과"], type: "음식" },
+            { jp: "すいか", kr: "수박", valid: ["수박"], type: "음식" },
+            { jp: "いちご", kr: "딸기", valid: ["딸기"], type: "음식" },
+            { jp: "マンション", kr: "중·고층 아파트", valid: ["맨션", "아파트"], type: "주거" },
+            { jp: "アパート", kr: "연립 주택", valid: ["연립주택", "아파트"], type: "주거" }
         ];
 
         let quizQueue = [];
@@ -329,10 +398,11 @@
         const dom = {
             screenQuiz: document.getElementById('quiz-screen'),
             screenResult: document.getElementById('result-screen'),
-            progress: document.getElementById('progress-bar'),
+            progressBar: document.getElementById('progress-bar'),
             currentNum: document.getElementById('current-num'),
-            remainNum: document.getElementById('remain-num'),
+            totalCntHeader: document.getElementById('total-cnt-header'),
             question: document.getElementById('question-text'),
+            categoryBadge: document.getElementById('category-badge'),
             input: document.getElementById('answer-input'),
             feedback: document.getElementById('feedback'),
             btn: document.getElementById('action-btn'),
@@ -356,7 +426,7 @@
 
             dom.screenQuiz.style.display = 'block';
             dom.screenResult.style.display = 'none';
-            dom.screenQuiz.style.transform = 'translateY(0)';
+            dom.totalCntHeader.innerText = quizQueue.length;
             
             showQuestion();
         }
@@ -367,10 +437,10 @@
             const total = quizQueue.length;
 
             dom.currentNum.innerText = currentIndex + 1;
-            dom.remainNum.innerText = `${total - currentIndex} 남음`;
-            dom.progress.style.width = `${((currentIndex) / total) * 100}%`;
+            dom.progressBar.style.width = `${((currentIndex) / total) * 100}%`;
             
             dom.question.innerText = currentData.jp;
+            dom.categoryBadge.innerText = currentData.type;
             dom.feedback.innerText = '';
             
             dom.input.value = '';
@@ -397,6 +467,7 @@
             const currentData = quizQueue[currentIndex];
             const cleanInput = inputVal.replace(/\s+/g, '');
             
+            // 정답 체크 (쉼표, 띄어쓰기 등 유연하게)
             const isCorrect = currentData.valid.some(ans => ans.replace(/\s+/g, '') === cleanInput);
 
             isWaitingNext = true;
@@ -409,7 +480,7 @@
                 dom.btn.style.background = 'var(--success)';
             } else {
                 dom.input.classList.add('wrong');
-                dom.feedback.innerHTML = `<span class="msg-error">오답! 정답은 [${currentData.kr}] 입니다.</span>`;
+                dom.feedback.innerHTML = `<span class="msg-error">오답! 정답: [${currentData.kr}]</span>`;
                 dom.btn.style.background = 'var(--error)';
                 wrongList.push({
                     jp: currentData.jp,
