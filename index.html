@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>일본어 형용사 단어 시험</title>
+    <style>
+        :root {
+            --primary-color: #4a90e2;
+            --success-color: #2ecc71;
+            --error-color: #e74c3c;
+            --bg-color: #f5f7fa;
+        }
+
+        body {
+            font-family: 'Pretendard', 'Malgun Gothic', sans-serif;
+            background-color: var(--bg-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            background-color: white;
+            padding: 2.5rem;
+            border-radius: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 500px;
+            text-align: center;
+        }
+
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 0.5rem;
+            font-size: 1.8rem;
+        }
+
+        .subtitle {
+            color: #7f8c8d;
+            font-size: 0.9rem;
+            margin-bottom: 2rem;
+        }
+
+        /* Progress Bar */
+        .progress-container {
+            width: 100%;
+            background-color: #eee;
+            border-radius: 10px;
+            height: 10px;
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background-color: var(--primary-color);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .status-text {
+            display: flex;
+            justify-content: space-between;
+            color: #7f8c8d;
+            font-size: 0.9rem;
+            margin-bottom: 20px;
+            font-weight: bold;
+        }
+
+        /* Question Area */
+        .question-box {
+            background-color: #ecf0f1;
+            padding: 3rem 1rem;
+            border-radius: 15px;
+            margin-bottom: 2rem;
+            position: relative;
+        }
+
+        .jp-word {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: #2c3e50;
+            word-break: keep-all;
+        }
+
+        .hint {
+            font-size: 0.9rem;
+            color: #95a5a6;
+            margin-top: 10px;
+        }
+
+        /* Input Area */
+        .input-group {
+            position: relative;
+            margin-bottom: 20px;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 15px;
+            font-size: 1.2rem;
+            border: 2px solid #bdc3c7;
+            border-radius: 10px;
+            box-sizing: border-box;
+            text-align: center;
+            transition: border-color 0.3s;
+            outline: none;
+        }
+
+        input[type="text"]:focus {
+            border-color: var(--primary-color);
+        }
+
+        input[type="text"].correct {
+            border-color: var(--success-color);
+            background-color: #e8f8f5;
+        }
+
+        input[type="text"].wrong {
+            border-color: var(--error-color);
+            background-color: #fdeaea;
+        }
+
+        /* Buttons */
+        .btn {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            width: 100%;
+            transition: transform 0.1s, background-color 0.2s;
+        }
+
+        .btn:active {
+            transform: scale(0.98);
+        }
+
+        .btn:disabled {
+            background-color: #bdc3c7;
+            cursor: not-allowed;
+        }
+
+        /* Feedback Message */
+        .feedback {
+            min-height: 20px;
+            margin-top: 15px;
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+
+        .feedback.success { color: var(--success-color); }
+        .feedback.error { color: var(--error-color); }
+
+        /* Result Screen */
+        .result-screen {
+            display: none;
+        }
+
+        .score-circle {
+            width: 150px;
+            height: 150px;
+            background: var(--primary-color);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 0 auto 30px;
+            color: white;
+            font-size: 2.5rem;
+            font-weight: bold;
+            box-shadow: 0 10px 20px rgba(74, 144, 226, 0.3);
+        }
+
+        .wrong-list {
+            text-align: left;
+            margin-top: 30px;
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid #eee;
+            border-radius: 10px;
+            padding: 15px;
+        }
+
+        .wrong-item {
+            border-bottom: 1px solid #eee;
+            padding: 10px 0;
+            font-size: 0.95rem;
+        }
+        
+        .wrong-item span {
+            display: block;
+        }
+        
+        .wrong-jp { color: #e74c3c; font-weight: bold; }
+        .wrong-kr { color: #7f8c8d; font-size: 0.9rem; margin-top: 4px;}
+
+        /* Mobile Optimization */
+        @media (max-width: 400px) {
+            .container { padding: 1.5rem; }
+            .jp-word { font-size: 2rem; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container" id="quiz-container">
+    <h1>어휘 테스트</h1>
+    <div class="subtitle">히라가나를 보고 뜻을 입력하세요</div>
+
+    <div class="status-text">
+        <span>진행도</span>
+        <span id="progress-text">1 / 45</span>
+    </div>
+    <div class="progress-container">
+        <div class="progress-bar" id="progress-bar"></div>
+    </div>
+
+    <div class="question-box">
+        <div class="jp-word" id="question-display"></div>
+        <div class="hint" id="category-hint"></div>
+    </div>
+
+    <div class="input-group">
+        <input type="text" id="answer-input" placeholder="정답 입력 (엔터)" autocomplete="off">
+    </div>
+
+    <button class="btn" id="submit-btn" onclick="checkAnswer()">제출하기</button>
+    <div class="feedback" id="feedback-msg"></div>
+</div>
+
+<div class="container result-screen" id="result-container">
+    <h1>테스트 종료</h1>
+    <p>수고하셨습니다! 결과는...</p>
+    
+    <div class="score-circle">
+        <span id="final-score">0</span>점
+    </div>
+
+    <p id="result-summary"></p>
+
+    <div class="wrong-list" id="wrong-answers-box" style="display:none;">
+        <h3 style="margin-top:0; color:#333;">오답 노트</h3>
+        <div id="wrong-list-content"></div>
+    </div>
+
+    <button class="btn" onclick="initGame()" style="margin-top: 20px;">다시 도전하기</button>
+</div>
+
+<script>
+    /* 데이터 구조: 
+     jp: 문제 (일본어)
+     kr: 정답 문자열 (화면 표시용)
+     valid: 정답으로 인정할 키워드 배열 (유연한 정답 처리를 위함)
+    */
+    const vocabData = [
+        // 1. i형용사(반대말)
+        { jp: "あたらしい", kr: "새롭다", valid: ["새롭다"] },
+        { jp: "ふるい", kr: "오래되다", valid: ["오래되다", "오래됐다"] },
+        { jp: "いい (よい)", kr: "좋다", valid: ["좋다"] },
+        { jp: "わるい", kr: "나쁘다", valid: ["나쁘다"] },
+        { jp: "うれしい", kr: "기쁘다", valid: ["기쁘다"] },
+        { jp: "かなしい", kr: "슬프다", valid: ["슬프다"] },
+        { jp: "おおきい", kr: "크다", valid: ["크다"] },
+        { jp: "ちいさい", kr: "작다", valid: ["작다"] },
+        { jp: "おいしい", kr: "맛있다", valid: ["맛있다"] },
+        { jp: "まずい", kr: "맛없다", valid: ["맛없다"] },
+        { jp: "おもしろい", kr: "재미있다", valid: ["재미있다", "재미 있다"] },
+        { jp: "つまらない", kr: "재미없다", valid: ["재미없다", "재미 없다", "지루하다"] },
+        { jp: "せまい", kr: "좁다", valid: ["좁다"] },
+        { jp: "ひろい", kr: "넓다", valid: ["넓다"] },
+        { jp: "ちかい", kr: "가깝다", valid: ["가깝다"] },
+        { jp: "とおい", kr: "멀다", valid: ["멀다"] },
+        { jp: "みじかい", kr: "짧다", valid: ["짧다"] },
+        { jp: "ながい", kr: "길다", valid: ["길다"] },
+        { jp: "すくない", kr: "적다", valid: ["적다"] },
+        { jp: "おおい", kr: "많다", valid: ["많다"] },
+        { jp: "やさしい (易しい)", kr: "쉽다", valid: ["쉽다"] },
+        { jp: "むずかしい", kr: "어렵다", valid: ["어렵다"] },
+
+        // 색
+        { jp: "あかい", kr: "빨갛다", valid: ["빨갛다"] },
+        { jp: "あおい", kr: "파랗다", valid: ["파랗다"] },
+        { jp: "しろい", kr: "하얗다", valid: ["하얗다"] },
+        { jp: "くろい", kr: "검다", valid: ["검다"] },
+        { jp: "きいろい", kr: "노랗다", valid: ["노랗다"] },
+
+        // 맛
+        { jp: "からい", kr: "맵다", valid: ["맵다"] },
+        { jp: "しおからい (しょっぱい)", kr: "짜다", valid: ["짜다"] },
+        { jp: "あまい", kr: "달다", valid: ["달다"] },
+        { jp: "すっぱい", kr: "시다", valid: ["시다"] },
+        { jp: "にがい", kr: "쓰다", valid: ["쓰다"] },
+
+        // 그 외
+        { jp: "あつい (熱い)", kr: "뜨겁다", valid: ["뜨겁다"] },
+        { jp: "かわいい", kr: "귀엽다", valid: ["귀엽다"] },
+        { jp: "いそがしい", kr: "바쁘다", valid: ["바쁘다"] },
+        { jp: "すばらしい", kr: "훌륭하다", valid: ["훌륭하다"] },
+        { jp: "あぶない", kr: "위험하다", valid: ["위험하다"] },
+        { jp: "やさしい (優しい)", kr: "상냥하다", valid: ["상냥하다"] },
+        { jp: "やすい (安い)", kr: "(가격이) 싸다", valid: ["싸다", "가격이 싸다", "가격이싸다"] },
+        { jp: "さむい", kr: "춥다", valid: ["춥다"] },
+
+        // 2. na형용사
+        { jp: "きれいだ", kr: "아름답다", valid: ["아름답다", "예쁘다"] },
+        { jp: "すてきだ", kr: "멋지다, 근사하다", valid: ["멋지다", "근사하다"] },
+        { jp: "すきだ", kr: "좋아하다", valid: ["좋아하다"] },
+        { jp: "きらいだ", kr: "싫어하다", valid: ["싫어하다"] },
+        { jp: "じょうず (上手)だ", kr: "잘하다, 능숙하다", valid: ["잘하다", "능숙하다"] },
+        { jp: "へた (下手)だ", kr: "잘 못하다, 서투르다", valid: ["잘 못하다", "잘못하다", "서투르다"] }, // '잘못하다'도 허용
+        { jp: "しずかだ", kr: "조용하다, 고요하다", valid: ["조용하다", "고요하다"] },
+        { jp: "だめだ", kr: "안 되다", valid: ["안 되다", "안되다"] },
+        { jp: "まじめだ", kr: "성실하다", valid: ["성실하다"] },
+        { jp: "にぎやかだ", kr: "번화하다", valid: ["번화하다"] }
+    ];
+
+    let gameQueue = [];
+    let currentIndex = 0;
+    let score = 0;
+    let wrongAnswers = [];
+    let isWaitingNext = false;
+
+    const dom = {
+        quizContainer: document.getElementById('quiz-container'),
+        resultContainer: document.getElementById('result-container'),
+        progressText: document.getElementById('progress-text'),
+        progressBar: document.getElementById('progress-bar'),
+        question: document.getElementById('question-display'),
+        input: document.getElementById('answer-input'),
+        btn: document.getElementById('submit-btn'),
+        feedback: document.getElementById('feedback-msg'),
+        finalScore: document.getElementById('final-score'),
+        resultSummary: document.getElementById('result-summary'),
+        wrongBox: document.getElementById('wrong-answers-box'),
+        wrongList: document.getElementById('wrong-list-content')
+    };
+
+    // 배열 섞기
+    function shuffle(array) {
+        return array.sort(() => Math.random() - 0.5);
+    }
+
+    function initGame() {
+        gameQueue = shuffle([...vocabData]);
+        currentIndex = 0;
+        score = 0;
+        wrongAnswers = [];
+        isWaitingNext = false;
+
+        dom.quizContainer.style.display = 'block';
+        dom.resultContainer.style.display = 'none';
+        
+        showQuestion();
+    }
+
+    function showQuestion() {
+        isWaitingNext = false;
+        const currentData = gameQueue[currentIndex];
+        
+        // UI 초기화
+        dom.question.innerText = currentData.jp;
+        dom.input.value = '';
+        dom.input.className = '';
+        dom.input.disabled = false;
+        dom.input.focus();
+        dom.feedback.innerText = '';
+        dom.btn.innerText = '제출하기';
+        dom.btn.className = 'btn';
+
+        // 진행도 업데이트
+        const progress = ((currentIndex + 1) / gameQueue.length) * 100;
+        dom.progressBar.style.width = `${progress}%`;
+        dom.progressText.innerText = `${currentIndex + 1} / ${gameQueue.length}`;
+    }
+
+    function checkAnswer() {
+        if (isWaitingNext) {
+            nextQuestion();
+            return;
+        }
+
+        const userInput = dom.input.value.trim();
+        if (!userInput) return; // 빈 입력 방지
+
+        const currentData = gameQueue[currentIndex];
+        // 띄어쓰기 제거 후 비교 (유연성)
+        const cleanInput = userInput.replace(/\s+/g, '');
+        
+        // 정답 체크 로직: valid 배열의 항목들과 비교
+        const isCorrect = currentData.valid.some(answer => {
+            return answer.replace(/\s+/g, '') === cleanInput;
+        });
+
+        if (isCorrect) {
+            processResult(true, "정답입니다! 🎉");
+        } else {
+            processResult(false, `오답! 정답은 "${currentData.kr}" 입니다.`);
+            wrongAnswers.push({
+                jp: currentData.jp,
+                kr: currentData.kr,
+                user: userInput
+            });
+        }
+    }
+
+    function processResult(isSuccess, message) {
+        isWaitingNext = true;
+        dom.input.disabled = true;
+        dom.btn.innerText = '다음 문제 >';
+        
+        if (isSuccess) {
+            score++;
+            dom.input.classList.add('correct');
+            dom.feedback.className = 'feedback success';
+            dom.btn.style.backgroundColor = '#2ecc71';
+        } else {
+            dom.input.classList.add('wrong');
+            dom.feedback.className = 'feedback error';
+            dom.btn.style.backgroundColor = '#e74c3c';
+        }
+        
+        dom.feedback.innerText = message;
+    }
+
+    function nextQuestion() {
+        currentIndex++;
+        if (currentIndex >= gameQueue.length) {
+            finishGame();
+        } else {
+            // 버튼 색상 원래대로 복구
+            dom.btn.style.backgroundColor = '';
+            showQuestion();
+        }
+    }
+
+    function finishGame() {
+        dom.quizContainer.style.display = 'none';
+        dom.resultContainer.style.display = 'block';
+
+        const finalScore = Math.round((score / gameQueue.length) * 100);
+        dom.finalScore.innerText = finalScore;
+        dom.resultSummary.innerText = `총 ${gameQueue.length}문제 중 ${score}개를 맞췄습니다.`;
+
+        // 오답 노트 표시
+        if (wrongAnswers.length > 0) {
+            dom.wrongBox.style.display = 'block';
+            dom.wrongList.innerHTML = wrongAnswers.map(item => `
+                <div class="wrong-item">
+                    <span class="wrong-jp">${item.jp}</span>
+                    <span class="wrong-kr">정답: ${item.kr}</span>
+                    <span style="color:#999; font-size:0.8rem;">(내가 쓴 답: ${item.user})</span>
+                </div>
+            `).join('');
+        } else {
+            dom.wrongBox.style.display = 'none';
+            dom.resultSummary.innerHTML += "<br><b>완벽합니다! 모든 문제를 맞췄어요! 👏</b>";
+        }
+    }
+
+    // 엔터키 입력 처리
+    dom.input.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            checkAnswer();
+        }
+    });
+
+    // 시작
+    window.onload = initGame;
+</script>
+
+</body>
+</html>
