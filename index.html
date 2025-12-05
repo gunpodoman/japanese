@@ -3,15 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>일본어 기말범위 올스타(이것만 하면 나도 만점?)</title>
+    <title>일본어 어휘 마스터 (맞춤형)</title>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --primary: #4f46e5;
-            --primary-hover: #4338ca;
-            --success: #059669;
-            --error: #dc2626;
-            --background: linear-gradient(135deg, #eef2ff 0%, #c7d2fe 100%);
+            --primary: #6366f1;
+            --primary-hover: #4f46e5;
+            --success: #10b981;
+            --error: #ef4444;
+            /* 요청하신 이전 디자인의 배경색 */
+            --background: linear-gradient(135deg, #a5f3fc 0%, #818cf8 100%);
             --card-bg: rgba(255, 255, 255, 0.95);
         }
 
@@ -33,7 +34,7 @@
             border-radius: 24px;
             box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
             width: 100%;
-            max-width: 500px;
+            max-width: 480px;
             text-align: center;
             backdrop-filter: blur(10px);
             transition: transform 0.3s ease;
@@ -44,15 +45,15 @@
         .status {
             display: flex;
             justify-content: space-between;
-            font-size: 0.9rem;
+            font-size: 0.875rem;
             color: #6b7280;
             margin-top: 8px;
-            font-weight: 600;
+            font-weight: 500;
         }
 
         .progress-wrapper {
             background: #e5e7eb;
-            height: 10px;
+            height: 8px;
             border-radius: 999px;
             overflow: hidden;
             margin-top: 10px;
@@ -76,20 +77,19 @@
         }
 
         .category-badge {
-            position: absolute;
-            top: 10px;
-            right: 10px;
+            display: inline-block;
             background: #e0e7ff;
             color: #4338ca;
-            font-size: 0.75rem;
-            padding: 4px 10px;
+            font-size: 0.8rem;
+            padding: 4px 12px;
             border-radius: 99px;
-            font-weight: 700;
+            margin-bottom: 10px;
+            font-weight: 600;
         }
 
         .jp-word {
             font-family: 'Noto Sans JP', sans-serif;
-            font-size: 2.5rem;
+            font-size: 2.8rem;
             font-weight: 700;
             color: #111827;
             line-height: 1.2;
@@ -117,7 +117,7 @@
 
         input[type="text"]:focus {
             border-color: var(--primary);
-            box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.2);
+            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
         }
 
         input.correct {
@@ -161,12 +161,16 @@
             font-weight: 700;
             cursor: pointer;
             transition: all 0.2s;
-            box-shadow: 0 4px 6px -1px rgba(79, 70, 229, 0.3);
+            box-shadow: 0 4px 6px -1px rgba(99, 102, 241, 0.3);
         }
 
         .btn:hover {
             background: var(--primary-hover);
             transform: translateY(-2px);
+        }
+
+        .btn:active {
+            transform: translateY(0);
         }
 
         #result-screen { display: none; }
@@ -207,8 +211,8 @@
     <div class="container" id="quiz-screen">
         <header>
             <div class="status">
-                <span>진행 상황</span>
-                <span><span id="current-num">1</span> / <span id="total-cnt-header">0</span></span>
+                <span>STAGE <span id="current-num">1</span></span>
+                <span id="remain-num">남은 문제 확인 중...</span>
             </div>
             <div class="progress-wrapper">
                 <div class="progress-bar" id="progress-bar"></div>
@@ -245,9 +249,9 @@
     </div>
 
     <script>
-        // === 데이터 통합 (기존 + PDF 내용) ===
+        // === 통합 데이터 (숫자는 0~12만 포함) ===
         const vocabData = [
-            // --- [기존] 형용사 ---
+            // 1. 형용사 (기존)
             { jp: "あたらしい", kr: "새롭다", valid: ["새롭다"], type: "형용사" },
             { jp: "ふるい", kr: "오래되다", valid: ["오래되다", "오래됐다", "낡다"], type: "형용사" },
             { jp: "いい", kr: "좋다", valid: ["좋다"], type: "형용사" },
@@ -301,7 +305,7 @@
             { jp: "まじめだ", kr: "성실하다", valid: ["성실하다"], type: "형용사" },
             { jp: "にぎやかだ", kr: "번화하다", valid: ["번화하다"], type: "형용사" },
 
-            // --- [신규] PDF Page 1 (기초 명사) ---
+            // 2. 명사 및 기타 (PDF 및 이전 요청)
             { jp: "いえ", kr: "집", valid: ["집"], type: "장소" },
             { jp: "えき", kr: "역", valid: ["역"], type: "장소" },
             { jp: "かお", kr: "얼굴", valid: ["얼굴"], type: "신체" },
@@ -322,53 +326,6 @@
             { jp: "りょうり", kr: "요리", valid: ["요리"], type: "생활" },
             { jp: "いぬ", kr: "개", valid: ["개", "강아지"], type: "동물" },
             { jp: "ねこ", kr: "고양이", valid: ["고양이"], type: "동물" },
-
-            // --- [신규] PDF Page 2 (숫자 완전 정복) ---
-            // 1~10
-            { jp: "いち", kr: "1", valid: ["1", "일", "하나"], type: "숫자" },
-            { jp: "に", kr: "2", valid: ["2", "이", "둘"], type: "숫자" },
-            { jp: "さん", kr: "3", valid: ["3", "삼", "셋"], type: "숫자" },
-            { jp: "よん", kr: "4", valid: ["4", "사", "넷"], type: "숫자" },
-            { jp: "ご", kr: "5", valid: ["5", "오", "다섯"], type: "숫자" },
-            { jp: "ろく", kr: "6", valid: ["6", "육", "여섯"], type: "숫자" },
-            { jp: "なな", kr: "7", valid: ["7", "칠", "일곱"], type: "숫자" },
-            { jp: "しち", kr: "7", valid: ["7", "칠", "일곱"], type: "숫자" },
-            { jp: "はち", kr: "8", valid: ["8", "팔", "여덟"], type: "숫자" },
-            { jp: "きゅう", kr: "9", valid: ["9", "구", "아홉"], type: "숫자" },
-            { jp: "く", kr: "9", valid: ["9", "구", "아홉"], type: "숫자" },
-            { jp: "じゅう", kr: "10", valid: ["10", "십", "열"], type: "숫자" },
-
-            // 10단위
-            { jp: "にじゅう", kr: "20", valid: ["20", "이십"], type: "숫자" },
-            { jp: "さんじゅう", kr: "30", valid: ["30", "삼십"], type: "숫자" },
-            { jp: "よんじゅう", kr: "40", valid: ["40", "사십"], type: "숫자" },
-            { jp: "ごじゅう", kr: "50", valid: ["50", "오십"], type: "숫자" },
-            { jp: "ろくじゅう", kr: "60", valid: ["60", "육십"], type: "숫자" },
-            { jp: "ななじゅう", kr: "70", valid: ["70", "칠십"], type: "숫자" },
-            { jp: "はちじゅう", kr: "80", valid: ["80", "팔십"], type: "숫자" },
-            { jp: "きゅうじゅう", kr: "90", valid: ["90", "구십"], type: "숫자" },
-
-            // 100단위 (발음 주의 포함)
-            { jp: "ひゃく", kr: "100", valid: ["100", "백"], type: "숫자" },
-            { jp: "にひゃく", kr: "200", valid: ["200", "이백"], type: "숫자" },
-            { jp: "さんびゃく", kr: "300", valid: ["300", "삼백"], type: "숫자" },
-            { jp: "よんひゃく", kr: "400", valid: ["400", "사백"], type: "숫자" },
-            { jp: "ごひゃく", kr: "500", valid: ["500", "오백"], type: "숫자" },
-            { jp: "ろっぴゃく", kr: "600", valid: ["600", "육백"], type: "숫자" },
-            { jp: "ななひゃく", kr: "700", valid: ["700", "칠백"], type: "숫자" },
-            { jp: "はっぴゃく", kr: "800", valid: ["800", "팔백"], type: "숫자" },
-            { jp: "きゅうひゃく", kr: "900", valid: ["900", "구백"], type: "숫자" },
-
-            // 천/만/억
-            { jp: "せん", kr: "1,000", valid: ["1000", "천", "일천"], type: "숫자" },
-            { jp: "さんぜん", kr: "3,000", valid: ["3000", "삼천"], type: "숫자" },
-            { jp: "はっせん", kr: "8,000", valid: ["8000", "팔천"], type: "숫자" },
-            { jp: "いちまん", kr: "10,000", valid: ["10000", "만", "일만"], type: "숫자" },
-            { jp: "じゅうまん", kr: "100,000", valid: ["100000", "십만"], type: "숫자" },
-            { jp: "ひゃくまん", kr: "1,000,000", valid: ["1000000", "백만"], type: "숫자" },
-            { jp: "いちおく", kr: "1억", valid: ["100000000", "1억", "일억"], type: "숫자" },
-
-            // --- [기존] 기타 어휘 ---
             { jp: "えいが", kr: "영화", valid: ["영화"], type: "명사" },
             { jp: "すいえい", kr: "수영", valid: ["수영"], type: "명사" },
             { jp: "ぎんこう", kr: "은행", valid: ["은행"], type: "명사" },
@@ -386,7 +343,22 @@
             { jp: "すいか", kr: "수박", valid: ["수박"], type: "음식" },
             { jp: "いちご", kr: "딸기", valid: ["딸기"], type: "음식" },
             { jp: "マンション", kr: "중·고층 아파트", valid: ["맨션", "아파트"], type: "주거" },
-            { jp: "アパート", kr: "연립 주택", valid: ["연립주택", "아파트"], type: "주거" }
+            { jp: "アパート", kr: "연립 주택", valid: ["연립주택", "아파트"], type: "주거" },
+
+            // 3. 숫자 (0 ~ 12)
+            { jp: "れい (ゼロ)", kr: "0", valid: ["0", "영", "제로"], type: "숫자" },
+            { jp: "いち", kr: "1", valid: ["1", "일", "하나"], type: "숫자" },
+            { jp: "に", kr: "2", valid: ["2", "이", "둘"], type: "숫자" },
+            { jp: "さん", kr: "3", valid: ["3", "삼", "셋"], type: "숫자" },
+            { jp: "よん (し)", kr: "4", valid: ["4", "사", "넷"], type: "숫자" },
+            { jp: "ご", kr: "5", valid: ["5", "오", "다섯"], type: "숫자" },
+            { jp: "ろく", kr: "6", valid: ["6", "육", "여섯"], type: "숫자" },
+            { jp: "なな (しち)", kr: "7", valid: ["7", "칠", "일곱"], type: "숫자" },
+            { jp: "はち", kr: "8", valid: ["8", "팔", "여덟"], type: "숫자" },
+            { jp: "きゅう (く)", kr: "9", valid: ["9", "구", "아홉"], type: "숫자" },
+            { jp: "じゅう", kr: "10", valid: ["10", "십", "열"], type: "숫자" },
+            { jp: "じゅういち", kr: "11", valid: ["11", "십일", "열하나"], type: "숫자" },
+            { jp: "じゅうに", kr: "12", valid: ["12", "십이", "열둘"], type: "숫자" }
         ];
 
         let quizQueue = [];
@@ -398,9 +370,9 @@
         const dom = {
             screenQuiz: document.getElementById('quiz-screen'),
             screenResult: document.getElementById('result-screen'),
-            progressBar: document.getElementById('progress-bar'),
+            progress: document.getElementById('progress-bar'),
             currentNum: document.getElementById('current-num'),
-            totalCntHeader: document.getElementById('total-cnt-header'),
+            remainNum: document.getElementById('remain-num'),
             question: document.getElementById('question-text'),
             categoryBadge: document.getElementById('category-badge'),
             input: document.getElementById('answer-input'),
@@ -426,7 +398,7 @@
 
             dom.screenQuiz.style.display = 'block';
             dom.screenResult.style.display = 'none';
-            dom.totalCntHeader.innerText = quizQueue.length;
+            dom.screenQuiz.style.transform = 'translateY(0)';
             
             showQuestion();
         }
@@ -437,7 +409,8 @@
             const total = quizQueue.length;
 
             dom.currentNum.innerText = currentIndex + 1;
-            dom.progressBar.style.width = `${((currentIndex) / total) * 100}%`;
+            dom.remainNum.innerText = `${total - currentIndex} 남음`;
+            dom.progress.style.width = `${((currentIndex) / total) * 100}%`;
             
             dom.question.innerText = currentData.jp;
             dom.categoryBadge.innerText = currentData.type;
@@ -467,7 +440,6 @@
             const currentData = quizQueue[currentIndex];
             const cleanInput = inputVal.replace(/\s+/g, '');
             
-            // 정답 체크 (쉼표, 띄어쓰기 등 유연하게)
             const isCorrect = currentData.valid.some(ans => ans.replace(/\s+/g, '') === cleanInput);
 
             isWaitingNext = true;
@@ -480,7 +452,7 @@
                 dom.btn.style.background = 'var(--success)';
             } else {
                 dom.input.classList.add('wrong');
-                dom.feedback.innerHTML = `<span class="msg-error">오답! 정답: [${currentData.kr}]</span>`;
+                dom.feedback.innerHTML = `<span class="msg-error">오답! 정답은 [${currentData.kr}] 입니다.</span>`;
                 dom.btn.style.background = 'var(--error)';
                 wrongList.push({
                     jp: currentData.jp,
