@@ -3,8 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>일본어 어휘 마스터</title>
-    <!-- 폰트 로드: Pretendard (한글), Noto Sans JP (일본어) -->
+    <title>일본어 어휘 마스터 (심화)</title>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -40,7 +39,6 @@
             transition: transform 0.3s ease;
         }
 
-        /* 헤더 영역 */
         header {
             margin-bottom: 2rem;
         }
@@ -75,7 +73,6 @@
             font-weight: 500;
         }
 
-        /* 문제 카드 영역 */
         .question-card {
             background: #f3f4f6;
             border-radius: 16px;
@@ -94,7 +91,6 @@
             word-break: keep-all;
         }
 
-        /* 입력 및 버튼 영역 */
         .input-group {
             position: relative;
             margin-bottom: 1.5rem;
@@ -119,7 +115,6 @@
             box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
         }
 
-        /* 정답/오답 스타일 */
         input.correct {
             border-color: var(--success);
             background-color: #ecfdf5;
@@ -173,10 +168,7 @@
             transform: translateY(0);
         }
 
-        /* 결과 화면 */
-        #result-screen {
-            display: none;
-        }
+        #result-screen { display: none; }
 
         .score-display {
             font-size: 4rem;
@@ -207,17 +199,15 @@
         .wrong-item:last-child { border-bottom: none; }
         .w-jp { font-weight: bold; color: var(--error); font-family: 'Noto Sans JP'; }
         .w-kr { color: #4b5563; font-size: 0.9rem; }
-
     </style>
 </head>
 <body>
 
-    <!-- 퀴즈 화면 -->
     <div class="container" id="quiz-screen">
         <header>
             <div class="status">
                 <span>STAGE <span id="current-num">1</span></span>
-                <span id="remain-num">45 남음</span>
+                <span id="remain-num">47 남음</span>
             </div>
             <div class="progress-wrapper">
                 <div class="progress-bar" id="progress-bar"></div>
@@ -237,7 +227,6 @@
         <button class="btn" id="action-btn" onclick="handleAction()">제출하기 (Enter)</button>
     </div>
 
-    <!-- 결과 화면 -->
     <div class="container" id="result-screen">
         <h1>테스트 완료!</h1>
         <p>당신의 최종 점수는?</p>
@@ -254,12 +243,16 @@
     </div>
 
     <script>
-        // 어휘 데이터 (45개)
+        // 수정된 데이터: いい(よい), しおからい(しょっぱい) 분리
+        // 한자 표기(易しい, 熱い 등)는 동음이의어 구분을 위해 유지
         const vocabData = [
-            // i형용사
             { jp: "あたらしい", kr: "새롭다", valid: ["새롭다"] },
             { jp: "ふるい", kr: "오래되다", valid: ["오래되다", "오래됐다", "낡다"] },
-            { jp: "いい (よい)", kr: "좋다", valid: ["좋다"] },
+            
+            // 분리됨: いい / よい
+            { jp: "いい", kr: "좋다", valid: ["좋다"] },
+            { jp: "よい", kr: "좋다", valid: ["좋다"] },
+            
             { jp: "わるい", kr: "나쁘다", valid: ["나쁘다"] },
             { jp: "うれしい", kr: "기쁘다", valid: ["기쁘다"] },
             { jp: "かなしい", kr: "슬프다", valid: ["슬프다"] },
@@ -277,33 +270,50 @@
             { jp: "ながい", kr: "길다", valid: ["길다"] },
             { jp: "すくない", kr: "적다", valid: ["적다"] },
             { jp: "おおい", kr: "많다", valid: ["많다"] },
+            
+            // 한자 구분 유지
             { jp: "やさしい (易しい)", kr: "쉽다", valid: ["쉽다"] },
             { jp: "むずかしい", kr: "어렵다", valid: ["어렵다"] },
+            
             { jp: "あかい", kr: "빨갛다", valid: ["빨갛다"] },
             { jp: "あおい", kr: "파랗다", valid: ["파랗다"] },
             { jp: "しろい", kr: "하얗다", valid: ["하얗다"] },
             { jp: "くろい", kr: "검다", valid: ["검다"] },
             { jp: "きいろい", kr: "노랗다", valid: ["노랗다"] },
             { jp: "からい", kr: "맵다", valid: ["맵다"] },
-            { jp: "しおからい (しょっぱい)", kr: "짜다", valid: ["짜다"] },
+            
+            // 분리됨: しおからい / しょっぱい
+            { jp: "しおからい", kr: "짜다", valid: ["짜다"] },
+            { jp: "しょっぱい", kr: "짜다", valid: ["짜다"] },
+
             { jp: "あまい", kr: "달다", valid: ["달다"] },
             { jp: "すっぱい", kr: "시다", valid: ["시다"] },
             { jp: "にがい", kr: "쓰다", valid: ["쓰다"] },
+            
+            // 한자 구분 유지
             { jp: "あつい (熱い)", kr: "뜨겁다", valid: ["뜨겁다"] },
+            
             { jp: "かわいい", kr: "귀엽다", valid: ["귀엽다"] },
             { jp: "いそがしい", kr: "바쁘다", valid: ["바쁘다"] },
             { jp: "すばらしい", kr: "훌륭하다", valid: ["훌륭하다"] },
             { jp: "あぶない", kr: "위험하다", valid: ["위험하다"] },
+            
+            // 한자 구분 유지
             { jp: "やさしい (優しい)", kr: "상냥하다", valid: ["상냥하다"] },
             { jp: "やすい (安い)", kr: "(가격이) 싸다", valid: ["싸다", "가격이 싸다", "가격이싸다"] },
+            
             { jp: "さむい", kr: "춥다", valid: ["춥다"] },
+            
             // na형용사
             { jp: "きれいだ", kr: "아름답다", valid: ["아름답다", "예쁘다", "깨끗하다"] },
             { jp: "すてきだ", kr: "멋지다, 근사하다", valid: ["멋지다", "근사하다"] },
             { jp: "すきだ", kr: "좋아하다", valid: ["좋아하다"] },
             { jp: "きらいだ", kr: "싫어하다", valid: ["싫어하다"] },
+            
+            // 한자 구분 유지
             { jp: "じょうず (上手)だ", kr: "잘하다, 능숙하다", valid: ["잘하다", "능숙하다"] },
             { jp: "へた (下手)だ", kr: "잘 못하다, 서투르다", valid: ["잘 못하다", "잘못하다", "서투르다"] },
+            
             { jp: "しずかだ", kr: "조용하다, 고요하다", valid: ["조용하다", "고요하다"] },
             { jp: "だめだ", kr: "안 되다", valid: ["안 되다", "안되다"] },
             { jp: "まじめだ", kr: "성실하다", valid: ["성실하다"] },
@@ -314,7 +324,7 @@
         let currentIndex = 0;
         let score = 0;
         let wrongList = [];
-        let isWaitingNext = false; // 현재 상태가 [정답 확인 후 대기] 상태인지 체크
+        let isWaitingNext = false;
 
         const dom = {
             screenQuiz: document.getElementById('quiz-screen'),
@@ -326,8 +336,6 @@
             input: document.getElementById('answer-input'),
             feedback: document.getElementById('feedback'),
             btn: document.getElementById('action-btn'),
-            
-            // 결과창 요소
             finalScore: document.getElementById('final-score'),
             correctCnt: document.getElementById('correct-cnt'),
             totalCnt: document.getElementById('total-cnt'),
@@ -358,7 +366,6 @@
             const currentData = quizQueue[currentIndex];
             const total = quizQueue.length;
 
-            // UI 업데이트
             dom.currentNum.innerText = currentIndex + 1;
             dom.remainNum.innerText = `${total - currentIndex} 남음`;
             dom.progress.style.width = `${((currentIndex) / total) * 100}%`;
@@ -366,38 +373,33 @@
             dom.question.innerText = currentData.jp;
             dom.feedback.innerText = '';
             
-            // 입력창 초기화
             dom.input.value = '';
             dom.input.disabled = false;
-            dom.input.className = ''; // 클래스 제거
-            dom.input.focus(); // 자동 포커스
+            dom.input.className = '';
+            dom.input.focus();
 
-            // 버튼 초기화
             dom.btn.innerText = '제출하기 (Enter)';
             dom.btn.style.background = 'var(--primary)';
         }
 
-        // 버튼 클릭 혹은 엔터 시 호출되는 메인 함수
         function handleAction() {
             if (isWaitingNext) {
-                // 이미 정답을 확인한 상태라면 -> 다음 문제로
                 nextQuestion();
             } else {
-                // 정답을 확인해야 하는 상태라면 -> 채점
                 checkAnswer();
             }
         }
 
         function checkAnswer() {
             const inputVal = dom.input.value.trim();
-            if (!inputVal) return; // 빈 값 방지
+            if (!inputVal) return;
 
             const currentData = quizQueue[currentIndex];
-            const cleanInput = inputVal.replace(/\s+/g, ''); // 띄어쓰기 무시
+            const cleanInput = inputVal.replace(/\s+/g, '');
             
             const isCorrect = currentData.valid.some(ans => ans.replace(/\s+/g, '') === cleanInput);
 
-            isWaitingNext = true; // 상태 변경: 이제 엔터를 치면 다음 문제로 감
+            isWaitingNext = true;
             dom.input.disabled = true;
 
             if (isCorrect) {
@@ -454,17 +456,14 @@
             }
         }
 
-        // 엔터키 리스너
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') {
-                // 결과 화면이 아닐 때만 작동
                 if (dom.screenQuiz.style.display !== 'none') {
                     handleAction();
                 }
             }
         });
 
-        // 시작
         window.onload = initQuiz;
     </script>
 </body>
