@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>일본어 1등급이라니, 무리무리(무리가 아니었다?!)</title>
+    <title>일본어 기말범위 올스타(단어장 포함)</title>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -13,6 +13,8 @@
             --error: #ef4444;
             --share: #8b5cf6;
             --share-hover: #7c3aed;
+            --vocab: #f59e0b; /* 단어장 색상 */
+            --vocab-hover: #d97706;
             --background: linear-gradient(135deg, #a5f3fc 0%, #818cf8 100%);
             --card-bg: rgba(255, 255, 255, 0.95);
         }
@@ -39,7 +41,15 @@
             text-align: center;
             backdrop-filter: blur(10px);
             transition: transform 0.3s ease;
+            max-height: 90vh; /* 단어장 스크롤을 위해 높이 제한 */
+            overflow-y: auto; /* 내용 넘치면 스크롤 */
         }
+
+        /* 스크롤바 커스텀 */
+        .container::-webkit-scrollbar { width: 8px; }
+        .container::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 4px; }
+        .container::-webkit-scrollbar-thumb { background: #c7c7c7; border-radius: 4px; }
+        .container::-webkit-scrollbar-thumb:hover { background: #a8a8a8; }
 
         #start-screen { display: block; }
         .mode-btn {
@@ -67,6 +77,15 @@
         }
         .mode-icon { font-size: 1.5rem; }
         .mode-desc { font-size: 0.85rem; color: #9ca3af; font-weight: 400; margin-top: 4px; }
+
+        /* 단어장 버튼 스타일 */
+        .vocab-btn-main {
+            border-color: #fcd34d;
+        }
+        .vocab-btn-main:hover {
+            border-color: var(--vocab);
+            color: var(--vocab);
+        }
 
         header { margin-bottom: 2rem; }
 
@@ -210,6 +229,34 @@
             margin-top: 10px;
         }
 
+        /* 단어장 화면 스타일 */
+        #vocab-screen { display: none; text-align: left; }
+        
+        .vocab-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            font-size: 0.95rem;
+        }
+        
+        .vocab-table th, .vocab-table td {
+            padding: 12px 8px;
+            border-bottom: 1px solid #e5e7eb;
+            text-align: left;
+        }
+        
+        .vocab-table th {
+            background-color: #f9fafb;
+            font-weight: bold;
+            color: #374151;
+            position: sticky;
+            top: 0;
+        }
+
+        .col-jp { font-family: 'Noto Sans JP'; font-weight: bold; color: var(--primary); width: 35%; }
+        .col-kanji { font-family: 'Noto Sans JP'; color: #6b7280; width: 25%; font-size: 0.9rem; }
+        .col-kr { color: #1f2937; width: 40%; }
+
         #quiz-screen, #result-screen { display: none; }
 
         .score-display {
@@ -244,10 +291,11 @@
 </head>
 <body>
 
+    <!-- 1. 시작 화면 -->
     <div class="container" id="start-screen">
         <h1 style="color: #374151; margin-bottom: 2rem; font-size: 1.5rem;">
             일본어 기말범위 올스타<br>
-            <span style="font-size: 0.9rem; color: #6b7280; font-weight:normal;">일본어 1등급이라니, 무리무리(무리가 아니었다?!)</span>
+            <span style="font-size: 0.9rem; color: #6b7280; font-weight:normal;">(완전 랜덤 & 단어장)</span>
         </h1>
         
         <button class="mode-btn" onclick="startGame('JP_KR')">
@@ -273,8 +321,17 @@
             </div>
             <span class="mode-icon">漢</span>
         </button>
+
+        <button class="mode-btn vocab-btn-main" onclick="showVocabList()">
+            <div>
+                <div>단어장 보기</div>
+                <div class="mode-desc">시험 범위 전체 단어 리스트</div>
+            </div>
+            <span class="mode-icon">📖</span>
+        </button>
     </div>
 
+    <!-- 2. 퀴즈 화면 -->
     <div class="container" id="quiz-screen">
         <header>
             <div class="status">
@@ -301,6 +358,7 @@
         <button class="btn home-btn" onclick="goHome()">메뉴로 나가기</button>
     </div>
 
+    <!-- 3. 결과 화면 -->
     <div class="container" id="result-screen">
         <h1>테스트 완료!</h1>
         <p>최종 점수</p>
@@ -318,7 +376,29 @@
         <button class="btn home-btn" onclick="goHome()">메뉴로 나가기</button>
     </div>
 
+    <!-- 4. 단어장 화면 (신규) -->
+    <div class="container" id="vocab-screen">
+        <h2 style="color: #374151; margin-bottom: 10px; text-align: center;">시험 범위 단어장</h2>
+        <p style="text-align: center; color: #6b7280; font-size: 0.9rem; margin-bottom: 20px;">총 <span id="total-vocab-count">0</span>개의 단어가 있습니다.</p>
+        
+        <table class="vocab-table">
+            <thead>
+                <tr>
+                    <th>히라가나</th>
+                    <th>한자</th>
+                    <th>뜻</th>
+                </tr>
+            </thead>
+            <tbody id="vocab-table-body">
+                <!-- 자바스크립트로 데이터 로드 -->
+            </tbody>
+        </table>
+
+        <button class="btn home-btn" onclick="goHome()" style="margin-top: 20px;">메뉴로 돌아가기</button>
+    </div>
+
     <script>
+        // === 통합 데이터 ===
         const vocabData = [
             { jp: "いちねんせい", kanji: "一年生", kr: "1학년", valid: ["1학년", "일학년"], type: "학교" },
             { jp: "にねんせい", kanji: "二年生", kr: "2학년", valid: ["2학년", "이학년"], type: "학교" },
@@ -332,18 +412,18 @@
             { jp: "えいご", kanji: "英語", kr: "영어", valid: ["영어"], type: "과목" },
             { jp: "じゅく", kanji: "塾", kr: "학원", valid: ["학원"], type: "학교" },
             { jp: "としょかん", kanji: "図書館", kr: "도서관", valid: ["도서관"], type: "장소" },
-            { jp: "ひとり", kanji: "一人", kr: "한 명", valid: ["한 명", "1명", "한명", "1인"], type: "인원" },
-            { jp: "ふたり", kanji: "二人", kr: "두 명", valid: ["두 명", "2명", "두명", "2인"], type: "인원" },
-            { jp: "さんにん", kanji: "三人", kr: "세 명", valid: ["세 명", "3명", "세명", "3인"], type: "인원" },
-            { jp: "よにん", kanji: "四人", kr: "네 명", valid: ["네 명", "4명", "네명", "4인"], type: "인원" },
-            { jp: "ごにん", kanji: "五人", kr: "다섯 명", valid: ["다섯 명", "5명", "다섯명", "5인"], type: "인원" },
-            { jp: "ろくにん", kanji: "六人", kr: "여섯 명", valid: ["여섯 명", "6명", "여섯명", "6인"], type: "인원" },
-            { jp: "しちにん", kanji: "七人", kr: "일곱 명 (시치닌)", valid: ["일곱 명", "7명", "일곱명", "7인"], type: "인원" },
-            { jp: "ななにん", kanji: "七人", kr: "일곱 명 (나나닌)", valid: ["일곱 명", "7명", "일곱명", "7인"], type: "인원" },
-            { jp: "はちにん", kanji: "八人", kr: "여덟 명", valid: ["여덟 명", "8명", "여덟명", "8인"], type: "인원" },
-            { jp: "きゅうにん", kanji: "九人", kr: "아홉 명", valid: ["아홉 명", "9명", "아홉명", "9인"], type: "인원" },
-            { jp: "くにん", kanji: "九人", kr: "아홉 명 (쿠닌)", valid: ["아홉 명", "9명", "아홉명", "9인"], type: "인원" },
-            { jp: "じゅうにん", kanji: "十人", kr: "열 명", valid: ["열 명", "10명", "열명", "10인"], type: "인원" },
+            { jp: "ひとり", kanji: "一人", kr: "한 명", valid: ["한 명", "1명", "한명"], type: "인원" },
+            { jp: "ふたり", kanji: "二人", kr: "두 명", valid: ["두 명", "2명", "두명"], type: "인원" },
+            { jp: "さんにん", kanji: "三人", kr: "세 명", valid: ["세 명", "3명", "세명"], type: "인원" },
+            { jp: "よにん", kanji: "四人", kr: "네 명", valid: ["네 명", "4명", "네명"], type: "인원" },
+            { jp: "ごにん", kanji: "五人", kr: "다섯 명", valid: ["다섯 명", "5명", "다섯명"], type: "인원" },
+            { jp: "ろくにん", kanji: "六人", kr: "여섯 명", valid: ["여섯 명", "6명", "여섯명"], type: "인원" },
+            { jp: "しちにん", kanji: "七人", kr: "일곱 명 (시치닌)", valid: ["일곱 명", "7명", "일곱명"], type: "인원" },
+            { jp: "ななにん", kanji: "七人", kr: "일곱 명 (나나닌)", valid: ["일곱 명", "7명", "일곱명"], type: "인원" },
+            { jp: "はちにん", kanji: "八人", kr: "여덟 명", valid: ["여덟 명", "8명", "여덟명"], type: "인원" },
+            { jp: "きゅうにん", kanji: "九人", kr: "아홉 명", valid: ["아홉 명", "9명", "아홉명"], type: "인원" },
+            { jp: "くにん", kanji: "九人", kr: "아홉 명 (쿠닌)", valid: ["아홉 명", "9명", "아홉명"], type: "인원" },
+            { jp: "じゅうにん", kanji: "十人", kr: "열 명", valid: ["열 명", "10명", "열명"], type: "인원" },
             { jp: "いちじ", kanji: "一時", kr: "1시", valid: ["1시", "한시"], type: "시간" },
             { jp: "にじ", kanji: "二時", kr: "2시", valid: ["2시", "두시"], type: "시간" },
             { jp: "さんじ", kanji: "三時", kr: "3시", valid: ["3시", "세시"], type: "시간" },
@@ -390,7 +470,7 @@
             { jp: "やちん", kanji: "家賃", kr: "집세", valid: ["집세", "월세"], type: "주거" },
             { jp: "トイレ", kanji: null, kr: "화장실", valid: ["화장실", "변기", "토일렛"], type: "주거" },
             { jp: "おふろ", kanji: "お風呂", kr: "목욕(탕)", valid: ["목욕", "목욕탕", "욕조", "욕실"], type: "주거" },
-            { jp: "リビング", kanji: null, kr: "거실", valid: ["거실", "리빙"], type: "주거" },
+            { jp: "リビング", kanji: null, kr: "거실", valid: ["거실"], type: "주거" },
             { jp: "へや", kanji: "部屋", kr: "방", valid: ["방"], type: "주거" },
             { jp: "だいどころ", kanji: "台所", kr: "부엌", valid: ["부엌", "주방"], type: "주거" },
             { jp: "あたしんち", kanji: null, kr: "우리 집 (아따맘마)", valid: ["우리 집", "우리집", "아따맘마"], type: "회화" },
@@ -402,8 +482,8 @@
             { jp: "どうぞ", kanji: null, kr: "자 / 어서 / 드세요", valid: ["자", "어서", "여기 있어요", "여기 있습니다", "들어오세요", "드세요"], type: "회화" },
             { jp: "おはいりください", kanji: "お入りください", kr: "들어오세요", valid: ["들어오세요", "들어오십시오"], type: "회화" },
             { jp: "いらっしゃい", kanji: null, kr: "어서 와", valid: ["어서 와", "어서 오세요", "어서와"], type: "회화" },
-            { jp: "どうも", kanji: null, kr: "감사 표현 / 강조 표현", valid: ["고마워", "감사", "안녕하세요", "강조", "강조 표현"], type: "회화" },
-            { jp: "でした", kanji: null, kr: "였습니다", valid: ["였습니다", "이었습니다"], type: "문법" },
+            { jp: "どうも", kanji: null, kr: "감사 표현 / 강조 표현", valid: ["고마워", "감사", "감사 표현", "안녕하세요", "강조", "강조 표현"], type: "회화" },
+            { jp: "でした", kanji: null, kr: "였습니다", valid: ["였습니다", "이었습니다", "였다"], type: "문법" },
             { jp: "です", kanji: null, kr: "입니다", valid: ["입니다", "에요", "이에요"], type: "문법" },
             { jp: "ぜひ", kanji: "是非", kr: "부디 / 제발 / 꼭", valid: ["부디", "제발", "꼭"], type: "부사" },
             { jp: "すみません", kanji: null, kr: "죄송합니다 / 저기요", valid: ["죄송합니다", "미안합니다", "저기요", "실례합니다"], type: "회화" },
@@ -413,8 +493,8 @@
             { jp: "あまり", kanji: null, kr: "별로 / 그다지", valid: ["별로", "그다지", "너무"], type: "부사" },
             { jp: "いかがですか", kanji: "如何ですか", kr: "어떻습니까? (정중)", valid: ["어떻습니까", "어떠세요", "어때요"], type: "회화" },
             { jp: "どうですか", kanji: null, kr: "어때요?", valid: ["어때요", "어떻습니까"], type: "회화" },
-            { jp: "いただきます", kanji: null, kr: "잘 먹겠습니다", valid: ["잘 먹겠습니다", "잘먹겠습니다", "식전 인사", "식전인사"], type: "회화" },
-            { jp: "ごちそうさま", kanji: null, kr: "잘 먹었습니다", valid: ["잘 먹었습니다", "잘먹었습니다", "식후 인사", "식후인사"], type: "회화" },
+            { jp: "いただきます", kanji: null, kr: "잘 먹겠습니다", valid: ["잘 먹겠습니다"], type: "회화" },
+            { jp: "ごちそうさま", kanji: null, kr: "잘 먹었습니다", valid: ["잘 먹었습니다"], type: "회화" },
             { jp: "わぎゅう", kanji: "和牛", kr: "와규 (일본 소고기)", valid: ["와규", "일본 소", "일본 소고기"], type: "음식" },
             { jp: "きなこ", kanji: null, kr: "콩가루", valid: ["콩가루"], type: "음식" },
             { jp: "なま", kanji: "生", kr: "날것 / 생", valid: ["날것", "생", "생맥주"], type: "음식" },
@@ -428,7 +508,7 @@
             { jp: "かつどう", kanji: "活動", kr: "활동", valid: ["활동"], type: "활동" },
             { jp: "クラブ", kanji: null, kr: "클럽 (동아리)", valid: ["클럽", "동아리"], type: "활동" },
             { jp: "ゆうれい", kanji: "幽霊", kr: "유령 (유령 회원)", valid: ["유령", "유령 회원"], type: "활동" },
-            { jp: "きたくぶ", kanji: "帰宅部", kr: "귀가부(유령 동아리)", valid: ["귀가부", "유령 동아리", "베가"], type: "활동" },
+            { jp: "きたくぶ", kanji: "帰宅部", kr: "귀가부", valid: ["귀가부"], type: "활동" },
             { jp: "やすみ", kanji: "休み", kr: "휴일 / 방학 / 쉼", valid: ["휴일", "방학", "쉼", "휴식", "쉬는 날"], type: "시간" },
             { jp: "しゅみ", kanji: "趣味", kr: "취미", valid: ["취미"], type: "취미" },
             { jp: "りょこう", kanji: "旅行", kr: "여행", valid: ["여행"], type: "취미" },
@@ -491,9 +571,9 @@
             { jp: "じょうずだ", kanji: "上手だ", kr: "잘하다", valid: ["잘하다", "능숙하다"], type: "형용사" },
             { jp: "へただ", kanji: "下手だ", kr: "잘 못하다", valid: ["잘 못하다", "서투르다", "못하다", "미숙하다"], type: "형용사" },
             { jp: "しずかだ", kanji: "静かだ", kr: "조용하다", valid: ["조용하다", "고요하다"], type: "형용사" },
-            { jp: "だめだ", kanji: "駄目だ", kr: "안 되다", valid: ["안 되다", "안되다", "안된다", "안 된다"], type: "형용사" },
+            { jp: "だめだ", kanji: "駄目だ", kr: "안 되다", valid: ["안 되다", "안되다"], type: "형용사" },
             { jp: "まじめだ", kanji: "真面目だ", kr: "성실하다", valid: ["성실하다"], type: "형용사" },
-            { jp: "にぎやかだ", kanji: "賑やかだ", kr: "번화하다", valid: ["번화하다", "떠들썩하다"], type: "형용사" },
+            { jp: "にぎやかだ", kanji: "賑やかだ", kr: "번화하다", valid: ["번화하다"], type: "형용사" },
             { jp: "れい", kanji: "零", kr: "0 (레이)", valid: ["0", "영", "제로"], type: "숫자" },
             { jp: "ゼロ", kanji: null, kr: "0 (제로)", valid: ["0", "영", "제로"], type: "숫자" },
             { jp: "いち", kanji: "一", kr: "1", valid: ["1", "일", "하나"], type: "숫자" },
@@ -524,6 +604,7 @@
             screenStart: document.getElementById('start-screen'),
             screenQuiz: document.getElementById('quiz-screen'),
             screenResult: document.getElementById('result-screen'),
+            screenVocab: document.getElementById('vocab-screen'),
             progress: document.getElementById('progress-bar'),
             remainNum: document.getElementById('remain-num'),
             question: document.getElementById('question-text'),
@@ -536,7 +617,9 @@
             correctCnt: document.getElementById('correct-cnt'),
             totalCnt: document.getElementById('total-cnt'),
             wrongBox: document.getElementById('wrong-box'),
-            wrongList: document.getElementById('wrong-list')
+            wrongList: document.getElementById('wrong-list'),
+            vocabBody: document.getElementById('vocab-table-body'),
+            vocabCount: document.getElementById('total-vocab-count')
         };
 
         function shuffle(array) {
@@ -560,6 +643,7 @@
             isWaitingNext = false;
 
             dom.screenStart.style.display = 'none';
+            dom.screenVocab.style.display = 'none';
             dom.screenQuiz.style.display = 'block';
             dom.screenResult.style.display = 'none';
 
@@ -688,13 +772,30 @@
             dom.screenStart.style.display = 'block';
             dom.screenQuiz.style.display = 'none';
             dom.screenResult.style.display = 'none';
+            dom.screenVocab.style.display = 'none';
         }
 
         function restartCurrentMode() {
             startGame(currentMode);
         }
 
-        // --- 공유 기능 (3단계 안전장치) ---
+        function showVocabList() {
+            dom.screenStart.style.display = 'none';
+            dom.screenVocab.style.display = 'block';
+            dom.vocabCount.innerText = vocabData.length;
+            
+            // 데이터 로드 (한 번만 수행하거나 매번 수행)
+            // 가나다/히라가나 순 정렬은 복잡하니 입력 순서대로 보여줍니다.
+            dom.vocabBody.innerHTML = vocabData.map(item => `
+                <tr>
+                    <td class="col-jp">${item.jp}</td>
+                    <td class="col-kanji">${item.kanji ? item.kanji : '-'}</td>
+                    <td class="col-kr">${item.kr}</td>
+                </tr>
+            `).join('');
+        }
+
+        // --- 공유 기능 ---
         async function shareResult() {
             const finalScore = dom.finalScore.innerText;
             const modeText = dom.modeTitle.innerText.split('(')[0].trim();
@@ -702,7 +803,6 @@
             const shareBtn = document.querySelector('.share-btn');
             const originalText = shareBtn.innerText;
 
-            // 1단계: 모바일 네이티브 공유 시도
             if (navigator.share) {
                 try {
                     await navigator.share({
@@ -715,23 +815,17 @@
                 }
             }
 
-            // 2단계: 클립보드 API 시도
             try {
                 await navigator.clipboard.writeText(textToCopy);
-                // 성공 피드백
                 shareBtn.innerText = "복사 완료! (Ctrl+V)";
                 shareBtn.style.background = "#059669";
                 setTimeout(() => {
                     shareBtn.innerText = originalText;
                     shareBtn.style.background = "";
                 }, 2000);
-                return;
             } catch (err) {
-                console.log("Clipboard API failed");
+                prompt("아래 텍스트를 복사하세요! (Ctrl+C)", textToCopy);
             }
-
-            // 3단계: 최후의 수단 (프롬프트 창)
-            prompt("아래 텍스트를 복사하세요! (Ctrl+C)", textToCopy);
         }
 
         document.addEventListener('keydown', (e) => {
